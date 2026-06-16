@@ -1,8 +1,8 @@
 # IITMBS_22F1001871_MLOPS_WEEKLY_ASSIGNMENT
 
-##Overview
-This repository contains coursework for MLOps weekly assignment.
-The focus is on building an end to end machine learning pipeline and make the model more relaible.
+## Overview
+This repository contains coursework for the MLOps weekly assignment.  
+The focus is on building an end-to-end machine learning pipelineand make the model more relaible.
 
 ## Contents
 - `data/` → Placeholder for dataset files (actual data stored in GCS).
