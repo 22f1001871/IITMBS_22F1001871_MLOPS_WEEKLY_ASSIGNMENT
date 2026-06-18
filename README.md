@@ -32,10 +32,11 @@ Provides an overview of the repository and the purpose of each included file.
 - Binary model files and standard dataset splits and Model artifacts are intentionally excluded from this repository as per the assignment instructions.
 
 ## GCS Structure
-
+```text
 week-1/
 ├── data/
 └── artifacts/
+```
 
 ## Sample Output
 
