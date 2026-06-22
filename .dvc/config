@@ -1,4 +1,0 @@
-[core]
-    remote = week_2
-['remote "week_2"']
-    url = gs://iitm-mlops-assignments/
