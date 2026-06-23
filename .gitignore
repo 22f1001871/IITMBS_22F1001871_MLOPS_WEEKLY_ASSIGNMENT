@@ -1,0 +1,26 @@
+# Ignore Python virtual environments
+.env/
+venv/
+__pycache__/
+*.pyc
+
+# Ignore DVC cache (optional, if you don’t want to track cache locally)
+.dvc/cache/
+
+# Ignore model artifacts if you don’t want them in Git
+*.joblib
+*.pkl
+*.csv
+# Ignore Python virtual environments
+.env/
+venv/
+__pycache__/
+*.pyc
+
+# Ignore DVC cache (optional, if you don’t want to track cache locally)
+.dvc/cache/
+
+# Ignore model artifacts if you don’t want them in Git
+*.joblib
+*.pkl
+*.csv
