@@ -10,7 +10,7 @@ import joblib
 
 data = pd.read_csv("iris.csv")
 
-X = data.drop[columns=['species']]
+X = data.drop(columns=['species'])
 y = data['species']
 
 model = DecisionTreeClassifier(max_depth=3, random_state=42)
