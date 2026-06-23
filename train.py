@@ -10,6 +10,11 @@ import joblib
 
 data = pd.read_csv("iris.csv")
 
+print("Info of the dataset")
+print("-------------------")
+data.info()
+print("-------------------")
+
 X = data.drop(columns=['species'])
 y = data['species']
 
