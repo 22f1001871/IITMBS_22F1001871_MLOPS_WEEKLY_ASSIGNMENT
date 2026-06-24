@@ -83,6 +83,12 @@ git commit -m "Iteration 1"
 
 dvc push
 git push origin week_2
+
+#command to tag
+git tag -a "v1.0" -m "Iteration 1 model"
+git tag -a "v2.0" -m "Iteration 2 model"
+git tag -a "v3.0" -m "Iteration 3 model"
+
 ```
 
 ## Learning Outcomes
