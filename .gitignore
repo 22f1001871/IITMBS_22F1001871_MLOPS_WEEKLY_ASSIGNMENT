@@ -39,5 +39,5 @@ __pycache__/
 *.py[cod]
 
 # Jupyter
-*.ipynb_checkpoints/v
+.ipynb_checkpoints/
 __init__.py
