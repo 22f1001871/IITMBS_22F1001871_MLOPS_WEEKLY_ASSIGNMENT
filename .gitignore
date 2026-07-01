@@ -41,3 +41,5 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 __init__.py
+train.py
+
