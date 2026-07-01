@@ -42,4 +42,4 @@ __pycache__/
 .ipynb_checkpoints/
 __init__.py
 train.py
-
+predict.py
