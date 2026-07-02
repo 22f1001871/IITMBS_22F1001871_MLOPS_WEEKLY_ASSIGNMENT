@@ -2,7 +2,17 @@ project: feature_repo
 # By default, the registry is a file (but can be turned into a more scalable SQL-backed registry)
 registry: data/registry.db
 # The provider primarily specifies default offline / online stores & storing the registry in a given cloud
-provider: local
+
+#changing the provider for Task - 6
+#starts here --------------------------------
+# provider: local
+provider: gcp
+
+offline_store:
+    type: bigquery
+    dataset: feast
+#ends here --------------------------------
+
 online_store:
     type: sqlite
     path: data/online_store.db

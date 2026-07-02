@@ -15,6 +15,7 @@ from feast import (
     Project,
     PushSource,
     RequestSource,
+    BigQuerySource
 )
 from feast.feature_logging import LoggingConfig
 from feast.infra.offline_stores.file_source import FileLoggingDestination
@@ -32,10 +33,20 @@ iris = Entity(name="iris", join_keys=["iris_id"])
 # production, you can use your favorite DWH, such as BigQuery. See Feast documentation
 # for more info.
 
-#Defining File source
-iris_source = FileSource(
+# #Defining File source
+# #Changes had been made to use BigQuery as Source.  
+# iris_source = FileSource(
+#     name="iris_source",
+#     table="data/iris.parquet",
+#     timestamp_field="event_timestamp",
+#     created_timestamp_column="created_timestamp",
+# )
+
+
+#Defining BigQuery source
+iris_source = BigQuerySource(
     name="iris_source",
-    path="data/iris.parquet",
+    table="iitm-mlops-assignments.feast.iris_data",
     timestamp_field="event_timestamp",
     created_timestamp_column="created_timestamp",
 )
