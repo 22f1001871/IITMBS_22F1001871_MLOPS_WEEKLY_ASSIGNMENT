@@ -1,38 +1,8 @@
-# Ignore Python virtual environments
+# Python virtual environments
 .env/
-venv/
-__pycache__/
-*.pyc
-
-# Ignore DVC cache (optional, if you don’t want to track cache locally)
-.dvc/cache/
-
-# Ignore model artifacts if you don’t want them in Git
-*.joblib
-*.pkl
-*.csv
-# Ignore Python virtual environments
-.env/
-venv/
-__pycache__/
-*.pyc
-
-# Ignore DVC cache (optional, if you don’t want to track cache locally)
-.dvc/cache/
-
-# Ignore model artifacts if you don’t want them in Git
-*.joblib
-*.pkl
-*.cs
-
-# Feast generated databases
-feature_repo/data/registry.db
-feature_repo/data/online_store.db
-
-# Python virtual environment
 env/
-.venv/
 venv/
+.venv/
 
 # Python cache
 __pycache__/
@@ -40,6 +10,15 @@ __pycache__/
 
 # Jupyter
 .ipynb_checkpoints/
-__init__.py
-train.py
-predict.py
+
+# DVC cache
+.dvc/cache/
+
+# Model/Data artifacts tracked by DVC
+*.joblib
+*.pkl
+*.csv
+
+# Feast generated databases
+feature_repo/data/registry.db
+feature_repo/data/online_store.db
