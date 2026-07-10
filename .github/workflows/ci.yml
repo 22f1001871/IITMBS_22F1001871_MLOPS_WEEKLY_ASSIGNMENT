@@ -40,14 +40,38 @@ jobs:
         run: |
               pytest -v | tee report.txt
 
-      - name: Create Report
+      - name: Evaluate Model
         run: |
-               echo "# CI Test Report" > report.md
-               echo "" >> report.md
-               echo "## Test Results" >> report.md
-               echo '```' >> report.md
-               cat report.txt >> report.md
-               echo '```' >> report.md
+              python evaluate.py
+
+      - name: Create CML Report
+        run: |
+              echo "# IRIS CI Report" > report.md
+              echo "" >> report.md
+
+              echo "## Model Evaluation Metrics" >> report.md
+              echo "" >> report.md
+
+              python - <<EOF >> report.md
+              import json
+
+              with open("metrics.json") as f:
+                  m = json.load(f)
+
+              print("| Metric | Value |")
+              print("|--------|------:|")
+              print(f"| Accuracy | {m['accuracy']:.4f} |")
+              print(f"| Precision | {m['precision']:.4f} |")
+              print(f"| Recall | {m['recall']:.4f} |")
+              print(f"| F1 Score | {m['f1_score']:.4f} |")
+              EOF
+
+              echo "" >> report.md
+              echo "## Pytest Results" >> report.md
+              echo "" >> report.md
+              echo '```' >> report.md
+              cat report.txt >> report.md
+              echo '```' >> report.md 
 
       - name: Comment PR with CML
         if: github.event_name == 'pull_request'
