@@ -13,7 +13,7 @@ from sklearn.metrics import (
     f1_score,
 )
 
-tracking_uri = os.getenv( "MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
+tracking_uri = os.getenv( "MLFLOW_TRACKING_URI")
 
 mlflow.set_tracking_uri(tracking_uri)
 

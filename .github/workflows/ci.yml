@@ -39,6 +39,10 @@ jobs:
         run: |
               pytest -v | tee report.txt
 
+      - name: Debug MLflow URI
+        run: |
+             echo "MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI"
+
       - name: Evaluate Model
         run: |
               python evaluate.py
