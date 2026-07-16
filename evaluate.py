@@ -15,7 +15,17 @@ from sklearn.metrics import (
 
 tracking_uri = os.getenv( "MLFLOW_TRACKING_URI")
 
-mlflow.set_tracking_uri(tracking_uri)
+print("Tracking URI:", mlflow.get_tracking_uri())
+
+from mlflow import MlflowClient
+
+client = MlflowClient()
+
+try:
+    print(client.search_registered_models())
+except Exception as e:
+    print("ERROR:", repr(e))
+    raise
 
 # Load data
 df = pd.read_csv("data/iris.csv")
