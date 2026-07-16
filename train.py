@@ -17,6 +17,15 @@ from sklearn.metrics import (
     f1_score,
 )
 
+tracking_uri = os.getenv(
+    "MLFLOW_TRACKING_URI",
+    "http://35.239.108.218:5000" 
+)
+
+mlflow.set_tracking_uri(tracking_uri)
+
+print("Tracking URI:", mlflow.get_tracking_uri())
+
 # Create MLflow experiment
 mlflow.set_experiment("IRIS Decision Tree")
 

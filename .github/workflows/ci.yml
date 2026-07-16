@@ -35,6 +35,14 @@ jobs:
       - name: Pull DVC Data
         run: dvc pull
 
+       - name: Test MLflow connectivity
+        run: |
+             echo "URI: $MLFLOW_TRACKING_URI"
+
+             curl -v $MLFLOW_TRACKING_URI
+
+             curl -v $MLFLOW_TRACKING_URI/api/2.0/mlflow/registered-models/search
+
       - name: Run Tests
         run: |
               pytest -v | tee report.txt
