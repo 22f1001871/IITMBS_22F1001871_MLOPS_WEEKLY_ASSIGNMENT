@@ -34,8 +34,8 @@ jobs:
 
       - name: Pull DVC Data
         run: dvc pull
-
-       - name: Test MLflow connectivity
+        
+      - name: Test MLflow connectivity
         run: |
              echo "URI: $MLFLOW_TRACKING_URI"
 
