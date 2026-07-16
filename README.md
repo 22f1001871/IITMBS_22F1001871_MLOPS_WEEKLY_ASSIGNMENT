@@ -1,154 +1,108 @@
-# MLOps Weekly Assignment - Week 4
+# MLOps Weekly Assignment - Week 5
 
 ## Overview
 
-This repository contains the implementation of the Week 4 MLOps assignment using GitHub Actions, DVC, Google Cloud Storage (GCS), Continuous Machine Learning (CML), and scikit-learn. The pipeline automatically retrieves versioned datasets and model artifacts from DVC, executes data validation and model evaluation tests, and reports the results on every push and pull request.
+This repository contains the implementation of the Week 5 MLOps assignment using Google Cloud Platform (GCP), MLflow Model Registry, Google Cloud Storage (GCS), GitHub Actions, and Continuous Integration (CI). The pipeline trains multiple Decision Tree models, logs experiments to MLflow, registers the best model, assigns the **champion** alias, and evaluates the registered model during CI.
 
 ## Files
 
 ### train.py
 
-* Trains the IRIS classification model.
-* Saves the trained model as a Joblib artifact.
-* Used for generating the versioned model tracked by DVC.
+- Loads the IRIS dataset.
+- Splits the data into training and testing sets.
+- Trains multiple Decision Tree models with different hyperparameters.
+- Logs parameters and evaluation metrics to MLflow.
+- Registers each trained model in the MLflow Model Registry.
+- Assigns the best-performing model the **champion** alias.
 
-### tests/test_data_validation.py
+### evaluate.py
 
-* Validates the IRIS dataset before model evaluation.
-* Checks dataset schema.
-* Verifies the absence of missing values.
-* Ensures feature data types are correct.
-* Confirms feature values fall within reasonable ranges.
-* Validates target class labels.
+- Connects to the remote MLflow Tracking Server.
+- Loads the registered model using the **champion** alias.
+- Evaluates the model on the IRIS dataset.
+- Computes Accuracy, Precision, Recall, and F1 Score.
+- Saves the evaluation metrics to `metrics.json`.
 
-### tests/test_model_evaluation.py
+### requirements.txt
 
-* Loads the trained model.
-* Performs inference on the evaluation dataset.
-* Computes evaluation metrics.
-* Verifies that model performance satisfies predefined thresholds for:
-
-  * Accuracy
-  * Precision
-  * Recall
-  * F1 Score
-
-### .github/workflows/ci.yml
-
-* Configures the GitHub Actions Continuous Integration pipeline.
-* Checks out the repository.
-* Installs project dependencies.
-* Authenticates with Google Cloud.
-* Retrieves versioned datasets and models using DVC.
-* Executes the complete pytest test suite.
-* Generates a CML report and publishes it as a Pull Request comment.
+Contains all Python dependencies required for training, evaluation, MLflow, DVC, and testing.
 
 ### data/
 
-* Contains the IRIS dataset tracked using DVC.
+Contains the IRIS dataset tracked using DVC.
 
-### models/
+### tests/
 
-* Contains the trained model tracked using DVC.
+Contains unit tests for:
 
-### README.md
+- Dataset validation
+- Model evaluation
 
-Provides an overview of the repository and the purpose of each included file.
+### .github/workflows/ci.yml
 
----
+Implements the GitHub Actions CI pipeline that:
+
+- Sets up Python
+- Installs project dependencies
+- Authenticates with Google Cloud
+- Pulls data from DVC
+- Runs automated tests
+- Evaluates the registered MLflow model
+- Generates a CML report
+- Posts the report on Pull Requests
+
+### metrics.json
+
+Stores evaluation metrics generated during model evaluation.
+
+### report.md
+
+Automatically generated CML report containing:
+
+- Evaluation metrics
+- Pytest results
+
+## MLflow Features
+
+- Experiment Tracking
+- Parameter Logging
+- Metric Logging
+- Model Registry
+- Registered Model Versioning
+- Champion Alias
+- Remote Artifact Storage in Google Cloud Storage
+
+## Workflow
+
+1. Train multiple Decision Tree models.
+2. Log experiments to MLflow.
+3. Register models in the MLflow Model Registry.
+4. Assign the best model as **champion**.
+5. Store model artifacts in Google Cloud Storage.
+6. GitHub Actions retrieves the registered model.
+7. Evaluate the champion model.
+8. Generate and publish the CI report.
 
 ## Technologies Used
 
-* Python
-* scikit-learn
-* pandas
-* pytest
-* GitHub Actions
-* DVC
-* Google Cloud Storage (GCS)
-* Continuous Machine Learning (CML)
-* Vertex AI Workbench
-* joblib
+- Python
+- Scikit-learn
+- Pandas
+- MLflow
+- DVC
+- Google Cloud Platform (GCP)
+- Google Cloud Storage (GCS)
+- GitHub Actions
+- CML
+- Pytest
 
----
+## Results
 
-## Notes
+The CI pipeline automatically:
 
-* Versioned datasets and trained model artifacts are managed using DVC.
-* Google Cloud Storage is used as the DVC remote storage.
-* GitHub Actions automatically executes the CI pipeline on every push and pull request.
-* CML publishes automated test reports as comments on Pull Requests.
-* Large datasets and model artifacts are excluded from Git and restored using `dvc pull`.
+- Executes unit tests
+- Retrieves the latest champion model from MLflow
+- Evaluates the model
+- Generates evaluation metrics
+- Publishes a markdown report for Pull Requests
 
----
-
-## Repository Structure
-
-```text
-.
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── data/
-│   ├── iris.csv.dvc
-├── models/
-│   ├── model.joblib.dvc
-├── tests/
-│   ├── test_data_validation.py
-│   └── test_model_evaluation.py
-├── train.py
-├── requirements.txt
-└── README.md
-```
-
----
-
-## CI Pipeline
-
-```text
-Developer Push / Pull Request
-            │
-            ▼
-      GitHub Actions
-            │
-            ▼
-     Authenticate to GCP
-            │
-            ▼
-         DVC Pull
-            │
-            ▼
-      Data Validation Tests
-            │
-            ▼
-    Model Evaluation Tests
-            │
-            ▼
-      Generate CML Report
-            │
-            ▼
-   Comment Results on Pull Request
-```
-
----
-
-## Sample Output
-
-```text
-============================= test session starts =============================
-
-tests/test_data_validation.py ........
-tests/test_model_evaluation.py ........
-
-======================== 10 passed in 1.76s ========================
-
-Model Evaluation Metrics
-
-Accuracy  : 0.9733
-Precision : 0.9732
-Recall    : 0.9733
-F1 Score  : 0.9732
-
-GitHub Actions Status: PASSED
-CML Report: Published successfully on Pull Request
-```
