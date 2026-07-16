@@ -1,5 +1,10 @@
-import joblib
+# import joblib
+import os
 import pandas as pd
+
+import mlflow
+import mlflow.pyfunc
+
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -7,7 +12,10 @@ from sklearn.metrics import (
     f1_score,
 )
 
-MODEL_PATH = "models/model.joblib"
+tracking_uri = os.getenv( "MLFLOW_TRACKING_URI", "sqlite:///mlflow.db")
+
+mlflow.set_tracking_uri(tracking_uri)
+
 TEST_DATA_PATH = "data/iris.csv"
 TARGET_COLUMN = "species"
 
@@ -19,7 +27,7 @@ MIN_F1 = 0.90
 
 
 def load_model():
-    return joblib.load(MODEL_PATH)
+    return mlflow.pyfunc.load_model("models:/iris_decision_tree@champion")
 
 
 def load_test_data():

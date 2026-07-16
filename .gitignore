@@ -22,3 +22,14 @@ __pycache__/
 # Feast generated databases
 feature_repo/data/registry.db
 feature_repo/data/online_store.db
+
+#MLflow
+mlruns/
+mlflow.db
+
+#Metrics generated during evaluation
+metrics.json
+
+#OS files
+.DS_Store
+Thumbs.db
