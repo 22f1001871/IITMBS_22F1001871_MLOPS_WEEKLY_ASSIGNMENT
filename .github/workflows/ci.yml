@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      MLFLOW_TRACKING_URI:${{secrets.MLFLOW_TRACKING_URI}}
+      MLFLOW_TRACKING_URI: ${{secrets.MLFLOW_TRACKING_URI}}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
