@@ -2,7 +2,7 @@ pandas==2.3.0
 numpy==2.0.2
 scikit-learn==1.9.0
 
-mlflow==3.14.1
+mlflow==3.14
 
 pytest==8.4.1
 
