@@ -1,4 +1,4 @@
 [core]
     remote = myremote
 ['remote "myremote"']
-    url = gs://iitm-mlops-assignments/week_4/dvc
+    url = gs://iitm-mlops-assignments/week5
