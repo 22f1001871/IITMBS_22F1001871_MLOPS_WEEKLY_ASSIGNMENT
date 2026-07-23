@@ -7,6 +7,13 @@ from sklearn.metrics import (
     f1_score,
 )
 
+import os
+
+print("Current directory:", os.getcwd())
+print("Model path exists:", os.path.exists("models/model.joblib"))
+print("Absolute model path:", os.path.abspath("models/model.joblib"))
+
+
 MODEL_PATH = "models/model.joblib"
 TEST_DATA_PATH = "data/iris.csv"
 TARGET_COLUMN = "species"

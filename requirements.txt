@@ -5,3 +5,4 @@ joblib
 pytest
 dvc[gcs]
 google-cloud-storage
+Flask

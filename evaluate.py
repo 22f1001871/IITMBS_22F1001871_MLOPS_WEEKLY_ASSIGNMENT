@@ -9,19 +9,23 @@ from sklearn.metrics import (
     f1_score,
 )
 
+
 # Load data
 df = pd.read_csv("data/iris.csv")
 
 X = df.drop(columns=["species"])
 y = df["species"]
 
-# Load model
+
+# Load model from DVC tracked model
 model = joblib.load("models/model.joblib")
+
 
 # Predict
 y_pred = model.predict(X)
 
-# Compute metrics
+
+# Metrics
 metrics = {
     "accuracy": accuracy_score(y, y_pred),
     "precision": precision_score(y, y_pred, average="macro"),
@@ -29,8 +33,10 @@ metrics = {
     "f1_score": f1_score(y, y_pred, average="macro"),
 }
 
+
 # Save metrics
 with open("metrics.json", "w") as f:
     json.dump(metrics, f, indent=4)
+
 
 print(metrics)
