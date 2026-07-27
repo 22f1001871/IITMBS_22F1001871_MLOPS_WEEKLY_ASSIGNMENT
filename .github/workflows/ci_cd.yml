@@ -3,11 +3,11 @@ name: IRIS CI/CD Pipeline
 on:
   push:
     branches:
-      - week_6
+      - week_7
 
   pull_request:
     branches:
-      - week_6
+      - week_7
 
 permissions:
   contents: read
@@ -146,3 +146,12 @@ jobs:
         run: |
           kubectl get pods
           kubectl get service
+
+      - name: Install wrk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wrk
+
+      - name: Stress Test
+        run: |
+          wrk -t4 -c1000 -d30s http://${{ secrets.EXTERNAL_IP }}/predict
