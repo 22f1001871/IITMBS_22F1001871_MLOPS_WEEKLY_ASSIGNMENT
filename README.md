@@ -1,47 +1,84 @@
-# MLOps Weekly Assignment - Week 4
+# MLOps Weekly Assignment - Week 7
 
 ## Overview
 
-This repository contains the implementation of the Week 4 MLOps assignment using GitHub Actions, DVC, Google Cloud Storage (GCS), Continuous Machine Learning (CML), and scikit-learn. The pipeline automatically retrieves versioned datasets and model artifacts from DVC, executes data validation and model evaluation tests, and reports the results on every push and pull request.
+This repository contains the implementation of the Week 7 MLOps assignment, extending the CI/CD pipeline with automated stress testing, Kubernetes Horizontal Pod Autoscaling (HPA), and monitoring using Google Cloud Platform (GCP). The project deploys a Flask-based IRIS classification API on Google Kubernetes Engine (GKE), performs automated deployment through GitHub Actions, executes load testing using `wrk`, and demonstrates autoscaling under varying workloads.
+
+---
 
 ## Files
 
-### train.py
+### app.py
 
-* Trains the IRIS classification model.
-* Saves the trained model as a Joblib artifact.
-* Used for generating the versioned model tracked by DVC.
+* Implements the Flask-based IRIS prediction API.
+* Loads the trained Decision Tree model.
+* Provides the `/predict` endpoint for inference.
 
-### tests/test_data_validation.py
+### evaluate.py
 
-* Validates the IRIS dataset before model evaluation.
-* Checks dataset schema.
-* Verifies the absence of missing values.
-* Ensures feature data types are correct.
-* Confirms feature values fall within reasonable ranges.
-* Validates target class labels.
+* Evaluates the trained model.
+* Computes Accuracy, Precision, Recall, and F1 Score.
+* Generates `metrics.json` for the CI pipeline.
 
-### tests/test_model_evaluation.py
+### tests/
+
+#### tests/test_data_validation.py
+
+* Validates the IRIS dataset.
+* Checks for missing values.
+* Verifies feature data types.
+* Confirms valid target labels.
+
+#### tests/test_model_evaluation.py
 
 * Loads the trained model.
 * Performs inference on the evaluation dataset.
-* Computes evaluation metrics.
-* Verifies that model performance satisfies predefined thresholds for:
+* Verifies that evaluation metrics satisfy predefined thresholds.
 
-  * Accuracy
-  * Precision
-  * Recall
-  * F1 Score
+### Dockerfile
 
-### .github/workflows/ci.yml
+* Builds the Docker image for the Flask inference API.
+* Packages the application and required dependencies for deployment.
 
-* Configures the GitHub Actions Continuous Integration pipeline.
-* Checks out the repository.
-* Installs project dependencies.
-* Authenticates with Google Cloud.
-* Retrieves versioned datasets and models using DVC.
-* Executes the complete pytest test suite.
-* Generates a CML report and publishes it as a Pull Request comment.
+### k8s/deployment.yaml
+
+* Defines the Kubernetes Deployment for the IRIS API.
+* Configures the container image and resource requests/limits.
+
+### k8s/service.yaml
+
+* Exposes the application using a Kubernetes LoadBalancer Service.
+* Provides an external endpoint for client requests.
+
+### k8s/hpa.yaml
+
+* Configures the Horizontal Pod Autoscaler (HPA).
+* Scales the deployment based on CPU utilization.
+* Uses:
+
+  * `minReplicas: 1`
+  * `maxReplicas: 3`
+  * CPU utilization target of 50%.
+
+### .github/workflows/ci_cd.yml
+
+Implements the complete CI/CD pipeline using GitHub Actions.
+
+Pipeline stages include:
+
+* Repository checkout
+* Python environment setup
+* Dependency installation
+* Google Cloud authentication
+* DVC data and model retrieval
+* Automated testing with Pytest
+* Model evaluation
+* CML report generation
+* Docker image build
+* Push to Google Artifact Registry
+* Deployment to Google Kubernetes Engine
+* Deployment verification
+* Automated stress testing using `wrk`
 
 ### data/
 
@@ -49,36 +86,73 @@ This repository contains the implementation of the Week 4 MLOps assignment using
 
 ### models/
 
-* Contains the trained model tracked using DVC.
+* Contains the trained Decision Tree model tracked using DVC.
 
 ### README.md
 
-Provides an overview of the repository and the purpose of each included file.
+Provides documentation for the Week 7 MLOps pipeline.
 
 ---
 
 ## Technologies Used
 
 * Python
+* Flask
 * scikit-learn
 * pandas
+* NumPy
+* joblib
 * pytest
+* Docker
+* Kubernetes
+* Google Kubernetes Engine (GKE)
+* Google Artifact Registry
+* Google Cloud Storage (GCS)
 * GitHub Actions
 * DVC
-* Google Cloud Storage (GCS)
 * Continuous Machine Learning (CML)
-* Vertex AI Workbench
-* joblib
+* `wrk`
+* Horizontal Pod Autoscaler (HPA)
+* Google Cloud Monitoring
+* Google Cloud Logging
 
 ---
 
-## Notes
+## Week 7 Features
 
-* Versioned datasets and trained model artifacts are managed using DVC.
-* Google Cloud Storage is used as the DVC remote storage.
-* GitHub Actions automatically executes the CI pipeline on every push and pull request.
-* CML publishes automated test reports as comments on Pull Requests.
-* Large datasets and model artifacts are excluded from Git and restored using `dvc pull`.
+### Continuous Integration
+
+* Executes automated tests using Pytest.
+* Retrieves datasets and model artifacts from DVC.
+* Generates model evaluation metrics.
+* Publishes a CML report on Pull Requests.
+
+### Continuous Deployment
+
+* Builds a Docker image.
+* Pushes the image to Google Artifact Registry.
+* Deploys the latest image to Google Kubernetes Engine.
+* Verifies successful deployment.
+
+### Stress Testing
+
+* Installs `wrk` during the GitHub Actions workflow.
+* Executes a stress test against the deployed API.
+* Reports Requests per Second, Latency, and Error Count.
+
+### Horizontal Pod Autoscaling
+
+* Automatically scales pods according to CPU utilization.
+* Demonstrates scaling from one pod to three pods during high load.
+
+### Monitoring
+
+* Uses Google Cloud Monitoring to observe:
+
+  * CPU utilization
+  * Memory utilization
+  * Pod scaling
+* Uses Google Cloud Logging to inspect application logs during stress testing.
 
 ---
 
@@ -88,67 +162,118 @@ Provides an overview of the repository and the purpose of each included file.
 .
 ├── .github/
 │   └── workflows/
-│       └── ci.yml
+│       └── ci_cd.yml
+├── k8s/
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── hpa.yaml
 ├── data/
-│   ├── iris.csv.dvc
+│   └── iris.csv.dvc
 ├── models/
-│   ├── model.joblib.dvc
+│   └── model.joblib.dvc
 ├── tests/
 │   ├── test_data_validation.py
 │   └── test_model_evaluation.py
-├── train.py
+├── app.py
+├── evaluate.py
+├── Dockerfile
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## CI Pipeline
+## CI/CD Pipeline
 
 ```text
-Developer Push / Pull Request
-            │
-            ▼
-      GitHub Actions
-            │
-            ▼
-     Authenticate to GCP
-            │
-            ▼
-         DVC Pull
-            │
-            ▼
-      Data Validation Tests
-            │
-            ▼
-    Model Evaluation Tests
-            │
-            ▼
-      Generate CML Report
-            │
-            ▼
-   Comment Results on Pull Request
+Developer Push
+       │
+       ▼
+GitHub Actions
+       │
+       ▼
+Install Dependencies
+       │
+       ▼
+Authenticate to Google Cloud
+       │
+       ▼
+DVC Pull
+       │
+       ▼
+Run Pytest
+       │
+       ▼
+Evaluate Model
+       │
+       ▼
+Generate CML Report
+       │
+       ▼
+Build Docker Image
+       │
+       ▼
+Push to Artifact Registry
+       │
+       ▼
+Deploy to GKE
+       │
+       ▼
+Verify Deployment
+       │
+       ▼
+Install wrk
+       │
+       ▼
+Stress Test (1000 Connections)
+       │
+       ▼
+Application Available on GKE
 ```
 
 ---
 
-## Sample Output
+## Horizontal Pod Autoscaling Workflow
 
 ```text
-============================= test session starts =============================
-
-tests/test_data_validation.py ........
-tests/test_model_evaluation.py ........
-
-======================== 10 passed in 1.76s ========================
-
-Model Evaluation Metrics
-
-Accuracy  : 0.9733
-Precision : 0.9732
-Recall    : 0.9733
-F1 Score  : 0.9732
-
-GitHub Actions Status: PASSED
-CML Report: Published successfully on Pull Request
+wrk Load Test
+       │
+       ▼
+CPU Utilization Increases
+       │
+       ▼
+Horizontal Pod Autoscaler
+       │
+       ▼
+Scale Pods
+1  ─────► 3
+       │
+       ▼
+Reduced CPU Utilization
+       │
+       ▼
+Improved Throughput
 ```
+
+---
+
+## Monitoring
+
+During stress testing, Google Cloud Monitoring and Cloud Logging are used to observe:
+
+* CPU utilization
+* Memory utilization
+* Active pod replicas
+* Application container logs
+* Autoscaling behaviour
+
+---
+
+## Notes
+
+* Datasets and trained model artifacts are versioned using DVC.
+* Google Cloud Storage is used as the DVC remote.
+* Docker images are stored in Google Artifact Registry.
+* The application is deployed on Google Kubernetes Engine.
+* Horizontal Pod Autoscaler dynamically scales pods based on CPU utilization.
+* GitHub Actions performs end-to-end CI/CD and executes automated stress testing after deployment.
