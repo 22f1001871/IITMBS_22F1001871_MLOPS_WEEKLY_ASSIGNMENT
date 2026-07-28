@@ -154,4 +154,4 @@ jobs:
 
       - name: Stress Test
         run: |
-          wrk -t4 -c1000 -d30s http://${{ secrets.EXTERNAL_IP }}/predict
+          wrk -t4 -c1000 -d30s -s wrk/post.lua http://${{ secrets.EXTERNAL_IP }}/predict
