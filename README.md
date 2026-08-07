@@ -184,6 +184,8 @@ Key observations:
 
 ## Author
 
-**IIT Madras BS in Data Science and Applications**
+
+- Roll Number: 22F1001871
+- Program: BS in Data Science and Applications, IIT Madras
 
 MLOps Weekly Assignment - Week 8
