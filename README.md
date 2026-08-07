@@ -1,154 +1,229 @@
-# MLOps Weekly Assignment - Week 4
+# MLOps Weekly Assignment - Week 6
+## Dockerization and Kubernetes Deployment of the IRIS Classification API
 
 ## Overview
 
-This repository contains the implementation of the Week 4 MLOps assignment using GitHub Actions, DVC, Google Cloud Storage (GCS), Continuous Machine Learning (CML), and scikit-learn. The pipeline automatically retrieves versioned datasets and model artifacts from DVC, executes data validation and model evaluation tests, and reports the results on every push and pull request.
+This repository contains the implementation of the Week 6 MLOps assignment. The objective of this assignment is to containerize the IRIS prediction API using Docker, deploy it to a Kubernetes cluster on Google Kubernetes Engine (GKE), and expose the service for online inference.
 
-## Files
-
-### train.py
-
-* Trains the IRIS classification model.
-* Saves the trained model as a Joblib artifact.
-* Used for generating the versioned model tracked by DVC.
-
-### tests/test_data_validation.py
-
-* Validates the IRIS dataset before model evaluation.
-* Checks dataset schema.
-* Verifies the absence of missing values.
-* Ensures feature data types are correct.
-* Confirms feature values fall within reasonable ranges.
-* Validates target class labels.
-
-### tests/test_model_evaluation.py
-
-* Loads the trained model.
-* Performs inference on the evaluation dataset.
-* Computes evaluation metrics.
-* Verifies that model performance satisfies predefined thresholds for:
-
-  * Accuracy
-  * Precision
-  * Recall
-  * F1 Score
-
-### .github/workflows/ci.yml
-
-* Configures the GitHub Actions Continuous Integration pipeline.
-* Checks out the repository.
-* Installs project dependencies.
-* Authenticates with Google Cloud.
-* Retrieves versioned datasets and models using DVC.
-* Executes the complete pytest test suite.
-* Generates a CML report and publishes it as a Pull Request comment.
-
-### data/
-
-* Contains the IRIS dataset tracked using DVC.
-
-### models/
-
-* Contains the trained model tracked using DVC.
-
-### README.md
-
-Provides an overview of the repository and the purpose of each included file.
+The application is built using FastAPI and serves predictions from a trained Decision Tree model.
 
 ---
 
-## Technologies Used
+## Project Structure
 
-* Python
-* scikit-learn
-* pandas
-* pytest
-* GitHub Actions
-* DVC
-* Google Cloud Storage (GCS)
-* Continuous Machine Learning (CML)
-* Vertex AI Workbench
-* joblib
-
----
-
-## Notes
-
-* Versioned datasets and trained model artifacts are managed using DVC.
-* Google Cloud Storage is used as the DVC remote storage.
-* GitHub Actions automatically executes the CI pipeline on every push and pull request.
-* CML publishes automated test reports as comments on Pull Requests.
-* Large datasets and model artifacts are excluded from Git and restored using `dvc pull`.
-
----
-
-## Repository Structure
-
-```text
+```
 .
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── data/
-│   ├── iris.csv.dvc
+├── app.py                  # FastAPI application
+├── train.py                # Model training script
+├── requirements.txt        # Python dependencies
+├── Dockerfile              # Docker image configuration
+├── deployment.yaml         # Kubernetes Deployment
+├── service.yaml            # Kubernetes Service
 ├── models/
-│   ├── model.joblib.dvc
-├── tests/
-│   ├── test_data_validation.py
-│   └── test_model_evaluation.py
-├── train.py
-├── requirements.txt
+│   └── model.joblib        # Trained model
+├── data/
+│   └── iris.csv            # Dataset
 └── README.md
 ```
 
 ---
 
-## CI Pipeline
+## Features
 
-```text
-Developer Push / Pull Request
-            │
-            ▼
-      GitHub Actions
-            │
-            ▼
-     Authenticate to GCP
-            │
-            ▼
-         DVC Pull
-            │
-            ▼
-      Data Validation Tests
-            │
-            ▼
-    Model Evaluation Tests
-            │
-            ▼
-      Generate CML Report
-            │
-            ▼
-   Comment Results on Pull Request
+- FastAPI REST API for IRIS flower classification
+- Dockerized application
+- Kubernetes deployment on Google Kubernetes Engine (GKE)
+- External LoadBalancer service
+- Scalable deployment architecture
+- Ready for Continuous Deployment workflows
+
+---
+
+## Technologies Used
+
+- Python 3.12
+- FastAPI
+- Scikit-learn
+- Joblib
+- Docker
+- Kubernetes
+- Google Kubernetes Engine (GKE)
+- Google Artifact Registry
+
+---
+
+## Dockerization
+
+The application is containerized using Docker.
+
+### Build Docker Image
+
+```bash
+docker build -t iris-api:v1 .
+```
+
+### Run Locally
+
+```bash
+docker run -p 5000:5000 iris-api:v1
+```
+
+The API will be available at
+
+```
+http://localhost:5000
+*will vary based on the IP
+```
+
+Swagger documentation:
+
+```
+http://localhost:5000/docs
 ```
 
 ---
 
-## Sample Output
+## Push Image to Artifact Registry
 
-```text
-============================= test session starts =============================
+Tag the image
 
-tests/test_data_validation.py ........
-tests/test_model_evaluation.py ........
-
-======================== 10 passed in 1.76s ========================
-
-Model Evaluation Metrics
-
-Accuracy  : 0.9733
-Precision : 0.9732
-Recall    : 0.9733
-F1 Score  : 0.9732
-
-GitHub Actions Status: PASSED
-CML Report: Published successfully on Pull Request
+```bash
+docker tag iris-api:v1 REGION-docker.pkg.dev/PROJECT_ID/iris-repo/iris-api:v1
 ```
+
+Push image
+
+```bash
+docker push REGION-docker.pkg.dev/PROJECT_ID/iris-repo/iris-api:v1
+```
+
+---
+
+## Kubernetes Deployment
+
+Create the deployment
+
+```bash
+kubectl apply -f deployment.yaml
+```
+
+Create the service
+
+```bash
+kubectl apply -f service.yaml
+```
+
+Verify deployment
+
+```bash
+kubectl get deployments
+kubectl get pods
+kubectl get services
+```
+
+---
+
+## API Endpoints
+
+### Home
+
+```
+GET /
+```
+
+Returns a welcome message.
+
+---
+
+### Predict
+
+```
+POST /predict
+```
+
+Example request
+
+```json
+{
+  "sepal_length": 5.1,
+  "sepal_width": 3.5,
+  "petal_length": 1.4,
+  "petal_width": 0.2
+}
+```
+
+Example response
+
+```json
+{
+  "prediction": "setosa"
+}
+```
+
+---
+
+## Deployment Verification
+
+Once the service is deployed, obtain the external IP:
+
+```bash
+kubectl get services
+```
+
+Example request
+
+```bash
+curl -X POST http://<EXTERNAL-IP>/predict \
+-H "Content-Type: application/json" \
+-d '{
+  "sepal_length":5.1,
+  "sepal_width":3.5,
+  "petal_length":1.4,
+  "petal_width":0.2
+}'
+```
+
+---
+
+## Model
+
+The deployed model is a Decision Tree Classifier trained on the IRIS dataset.
+
+Target classes:
+
+- Setosa
+- Versicolor
+- Virginica
+
+---
+
+## Learning Outcomes
+
+This assignment demonstrates:
+
+- Building Docker images for machine learning applications
+- Containerizing FastAPI services
+- Deploying containers to Kubernetes
+- Exposing applications using LoadBalancer services
+- Managing containerized ML inference workloads
+- Preparing ML applications for production deployment
+
+---
+
+## Future Improvements
+
+- Horizontal Pod Autoscaling (HPA)
+- CI/CD using GitHub Actions
+- MLflow Model Registry integration
+- Monitoring with Prometheus and Grafana
+- Canary deployments
+- Rolling updates
+
+---
+
+## Author
+
+- Roll Number: 22F1001871
+- Program: BS in Data Science and Applications, IIT Madras
+
+MLOps Weekly Assignment - Week 6
