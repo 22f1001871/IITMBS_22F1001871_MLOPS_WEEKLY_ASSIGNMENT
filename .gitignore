@@ -19,6 +19,7 @@ __pycache__/
 !models/model.joblib
 *.pkl
 *.csv
+*.db
 
 # Feast generated databases
 feature_repo/data/registry.db

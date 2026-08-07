@@ -1,4 +1,0 @@
-[core]
-    remote = myremote
-['remote "myremote"']
-    url = gs://iitm-mlops-assignments/week_6/dvc
