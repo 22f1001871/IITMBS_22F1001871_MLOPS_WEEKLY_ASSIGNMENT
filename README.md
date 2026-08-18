@@ -1,191 +1,54 @@
-# MLOps Weekly Assignment - Week 8
-## Machine Learning Security: Data Poisoning Attack and Mitigation
+# MLOps Weekly Assignment - Week 9
+# Explainability, Fairness, and Drift in the IRIS Pipeline
 
 ## Overview
 
-This project demonstrates the impact of **data poisoning attacks** on a machine learning model using the IRIS dataset. Three poisoned datasets were created by randomly replacing feature values and labels for different percentages of the training data. The performance of a Decision Tree classifier was evaluated on each dataset, and all experiments were tracked using MLflow.
+This assignment extends the IRIS machine learning pipeline with
+explainability, fairness analysis, data drift detection, and model
+governance.
+
+The following concepts were implemented:
+
+- Sensitive attribute introduction
+- Fairness evaluation using Fairlearn
+- Model explainability using SHAP
+- Data drift detection using the Kolmogorov-Smirnov (KS) test
+- Model documentation using a Model Card
+
+The experiments were performed using a Jupyter Notebook.
 
 ---
 
-## Objectives
+## Dataset
 
-- Explain common Machine Learning security threat vectors.
-- Simulate data poisoning attacks on the IRIS dataset.
-- Measure the impact of poisoned data on model performance.
-- Track experiments using MLflow.
-- Discuss mitigation strategies for defending production ML pipelines.
+The IRIS dataset was used for training and evaluation.
 
----
+The dataset contains 150 samples belonging to three classes:
 
-## Repository Structure
+- Setosa
+- Versicolor
+- Virginica
 
-```
-.
-├── data/
-│   ├── iris.csv
-│   ├── iris_clean.csv
-│   ├── iris_poisoned_5.csv
-│   ├── iris_poisoned_10.csv
-│   └── iris_poisoned_50.csv
-│
-├── train.py
-├── poison_dataset.py
-├── requirements.txt
-└── README.md
-```
+The four original features are:
 
----
+- `sepal_length`
+- `sepal_width`
+- `petal_length`
+- `petal_width`
 
-## Data Poisoning
-
-The original IRIS dataset is used as the baseline.
-
-Three poisoned datasets were generated:
-
-| Dataset | Corruption |
-|----------|------------|
-| iris_clean.csv | 0% |
-| iris_poisoned_5.csv | 5% |
-| iris_poisoned_10.csv | 10% |
-| iris_poisoned_50.csv | 50% |
-
-### Poisoning Method
-
-For each selected sample:
-
-- Replace all four features with randomly generated values.
-- Assign a random class label.
-- Save the modified dataset.
-
-This simulates an attacker injecting noisy samples into the training data.
+A `location` attribute was additionally introduced for fairness
+analysis.
 
 ---
 
 ## Model
 
-Algorithm:
+A Decision Tree Classifier was used for classification.
 
-- Decision Tree Classifier
+The model was trained using only the original four Iris features:
 
-Hyperparameters:
-
-- max_depth = 3
-- min_samples_split = 2
-
-Evaluation Metrics:
-
-- Accuracy
-- Precision
-- Recall
-- F1-score
-
----
-
-## MLflow Experiment Tracking
-
-Experiment Name:
-
-```
-IRIS POISON TESTING
-```
-
-Each experiment logs:
-
-- Dataset used
-- Hyperparameters
-- Accuracy
-- Precision
-- Recall
-- F1-score
-- Registered model
-
-The best-performing model is assigned the **champion** alias in the MLflow Model Registry.
-
----
-
-## Running the Project
-
-### Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### Generate Poisoned Datasets
-
-```bash
-python poison_dataset.py
-```
-
-### Train and Track Experiments
-
-```bash
-python train.py
-```
-
----
-
-## Results
-
-The expectation is that increasing the amount of poisoned data reduces model performance.
-
-Typical trend:
-
-| Dataset | Expected Performance |
-|----------|----------------------|
-| Clean | Highest |
-| 5% Poisoned | Slight decrease |
-| 10% Poisoned | Moderate decrease |
-| 50% Poisoned | Significant decrease |
-
----
-
-## Security Threats Discussed
-
-- Data Poisoning
-- Adversarial Examples
-- Model Extraction
-- Prompt Injection
-
----
-
-## Mitigation Strategies
-
-The following defenses are discussed:
-
-- Statistical validation
-- Anomaly detection
-- Data provenance tracking
-- Schema enforcement
-- Dataset quality monitoring
-
----
-
-## Data Quality vs Data Quantity
-
-Key observations:
-
-- High-quality data is more valuable than simply having more data.
-- Collecting additional poisoned data does not improve model performance.
-- Increasing the proportion of clean data improves model reliability.
-- As the clean data ratio decreases, a larger amount of clean data is required to achieve reliable training.
-
----
-
-## Technologies Used
-
-- Python
-- Pandas
-- NumPy
-- Scikit-learn
-- MLflow
-
----
-
-## Author
-
-
-- Roll Number: 22F1001871
-- Program: BS in Data Science and Applications, IIT Madras
-
-MLOps Weekly Assignment - Week 8
+```text
+sepal_length
+sepal_width
+petal_length
+petal_width
