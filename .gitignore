@@ -1,26 +1,5 @@
-# Python virtual environments
-.env/
-env/
-venv/
-.venv/
-
-# Python cache
 __pycache__/
-*.py[cod]
-
-# Jupyter
-.ipynb_checkpoints/
-
-# DVC cache
-.dvc/cache/
-
-# Model/Data artifacts tracked by DVC
-*.joblib
-!models/model.joblib
-*.pkl
-*.csv
-*.db
-
-# Feast generated databases
-feature_repo/data/registry.db
-feature_repo/data/online_store.db
+*.pyc
+.*env
+.venv/
+results/

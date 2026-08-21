@@ -1,0 +1,406 @@
+name: Week 10 Gemini Evaluation
+
+# ============================================================
+# Trigger
+# ============================================================
+
+on:
+  push:
+    branches:
+      - week_10
+
+  workflow_dispatch:
+
+
+# ============================================================
+# Job
+# ============================================================
+
+jobs:
+
+  evaluate:
+
+    name: Evaluate Fine-Tuned Gemini Models
+
+    runs-on: ubuntu-latest
+
+    # --------------------------------------------------------
+    # Environment variables
+    # --------------------------------------------------------
+
+    env:
+
+      GCP_PROJECT_ID: iitm-mlops-assignments
+
+      GCP_LOCATION: us-central1
+
+      # V1 - Raw Feature Representation
+      V1_ENDPOINT: projects/888678748237/locations/us-central1/endpoints/9061634426164740096
+
+      # V2 - Natural Language Representation
+      V2_ENDPOINT: projects/888678748237/locations/us-central1/endpoints/1382997061498044416
+
+      # Regression threshold
+      ACCURACY_THRESHOLD: "0.80"
+
+
+    steps:
+
+      # ======================================================
+      # 1. Checkout repository
+      # ======================================================
+
+      - name: Checkout repository
+
+        uses: actions/checkout@v4
+
+
+      # ======================================================
+      # 2. Set up Python
+      # ======================================================
+
+      - name: Set up Python
+
+        uses: actions/setup-python@v5
+
+        with:
+          python-version: "3.12"
+
+
+      # ======================================================
+      # 3. Install Python dependencies
+      # ======================================================
+
+      - name: Install dependencies
+
+        run: |
+
+          python -m pip install --upgrade pip
+
+          pip install -r requirements.txt
+
+
+      # ======================================================
+      # 4. Authenticate with Google Cloud
+      # ======================================================
+
+      - name: Authenticate to Google Cloud
+
+        uses: google-github-actions/auth@v3
+
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+
+      # ======================================================
+      # 5. Set up Google Cloud SDK
+      # ======================================================
+
+      - name: Set up Google Cloud SDK
+
+        uses: google-github-actions/setup-gcloud@v3
+
+
+      # ======================================================
+      # 6. Verify Google Cloud authentication
+      # ======================================================
+
+      - name: Verify GCP authentication
+
+        run: |
+
+          echo "Authenticated account:"
+
+          gcloud auth list
+
+          echo ""
+
+          echo "Current project:"
+
+          gcloud config get-value project
+
+          echo ""
+
+          echo "Expected project:"
+
+          echo "$GCP_PROJECT_ID"
+
+
+      # ======================================================
+      # 7. Check test dataset
+      # ======================================================
+
+      - name: Check test dataset
+
+        run: |
+
+          echo "Checking test dataset..."
+
+          ls -lh data/test.csv
+
+          echo ""
+
+          echo "Dataset preview:"
+
+          head -5 data/test.csv
+
+
+      # ======================================================
+      # 8. Create results directory
+      # ======================================================
+
+      - name: Create results directory
+
+        run: |
+
+          mkdir -p results
+
+
+      # ======================================================
+      # 9. Evaluate V1
+      # ======================================================
+
+      - name: Evaluate V1 - Raw Features
+
+        run: |
+
+          echo "=================================================="
+
+          echo "Evaluating V1"
+
+          echo "=================================================="
+
+          python scripts/evaluate.py \
+            --version v1 \
+            --test-csv data/test.csv \
+            --endpoint "$V1_ENDPOINT" \
+            --project "$GCP_PROJECT_ID" \
+            --location "$GCP_LOCATION" \
+            --output results/v1_results.json
+
+
+      # ======================================================
+      # 10. Evaluate V2
+      # ======================================================
+
+      - name: Evaluate V2 - Natural Language
+
+        run: |
+
+          echo "=================================================="
+
+          echo "Evaluating V2"
+
+          echo "=================================================="
+
+          python scripts/evaluate.py \
+            --version v2 \
+            --test-csv data/test.csv \
+            --endpoint "$V2_ENDPOINT" \
+            --project "$GCP_PROJECT_ID" \
+            --location "$GCP_LOCATION" \
+            --output results/v2_results.json
+
+
+      # ======================================================
+      # 11. Compare V1 and V2
+      # ======================================================
+
+      - name: Compare V1 and V2
+
+        run: |
+
+          echo "=================================================="
+
+          echo "Comparing models"
+
+          echo "=================================================="
+
+          python scripts/compare.py \
+            --v1 results/v1_results.json \
+            --v2 results/v2_results.json \
+            --output results/comparison.json
+
+
+      # ======================================================
+      # 12. Display comparison
+      # ======================================================
+
+      - name: Display comparison
+
+        run: |
+
+          echo "=================================================="
+
+          echo "MODEL COMPARISON"
+
+          echo "=================================================="
+
+          cat results/comparison.json
+
+
+      # ======================================================
+      # 13. Accuracy regression guard
+      # ======================================================
+
+      - name: Check accuracy threshold
+
+        run: |
+
+          python - <<'PY'
+
+          import json
+          import os
+          import sys
+
+
+          # --------------------------------------------------
+          # Configuration
+          # --------------------------------------------------
+
+          threshold = float(
+              os.environ["ACCURACY_THRESHOLD"]
+          )
+
+
+          # --------------------------------------------------
+          # Load V1 results
+          # --------------------------------------------------
+
+          with open(
+              "results/v1_results.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+
+              v1 = json.load(f)
+
+
+          # --------------------------------------------------
+          # Load V2 results
+          # --------------------------------------------------
+
+          with open(
+              "results/v2_results.json",
+              "r",
+              encoding="utf-8"
+          ) as f:
+
+              v2 = json.load(f)
+
+
+          # --------------------------------------------------
+          # Extract accuracy
+          # --------------------------------------------------
+
+          v1_accuracy = v1["accuracy"]
+
+          v2_accuracy = v2["accuracy"]
+
+
+          # --------------------------------------------------
+          # Print results
+          # --------------------------------------------------
+
+          print("==============================================")
+
+          print("Accuracy Regression Check")
+
+          print("==============================================")
+
+          print(
+              f"Required threshold : {threshold:.4f}"
+          )
+
+          print(
+              f"V1 accuracy        : {v1_accuracy:.4f}"
+          )
+
+          print(
+              f"V2 accuracy        : {v2_accuracy:.4f}"
+          )
+
+          print("==============================================")
+
+
+          # --------------------------------------------------
+          # Check threshold
+          # --------------------------------------------------
+
+          failed = False
+
+
+          if v1_accuracy < threshold:
+
+              print(
+                  f"❌ V1 failed: "
+                  f"{v1_accuracy:.4f} < {threshold:.4f}"
+              )
+
+              failed = True
+
+          else:
+
+              print(
+                  f"✅ V1 passed: "
+                  f"{v1_accuracy:.4f} >= {threshold:.4f}"
+              )
+
+
+          if v2_accuracy < threshold:
+
+              print(
+                  f"❌ V2 failed: "
+                  f"{v2_accuracy:.4f} < {threshold:.4f}"
+              )
+
+              failed = True
+
+          else:
+
+              print(
+                  f"✅ V2 passed: "
+                  f"{v2_accuracy:.4f} >= {threshold:.4f}"
+              )
+
+
+          print("==============================================")
+
+
+          # --------------------------------------------------
+          # Fail GitHub Actions if necessary
+          # --------------------------------------------------
+
+          if failed:
+
+              print(
+                  "❌ Regression guard FAILED."
+              )
+
+              sys.exit(1)
+
+
+          print(
+              "✅ Regression guard PASSED."
+          )
+
+          PY
+
+
+      # ======================================================
+      # 14. Upload results as GitHub Actions artifacts
+      # ======================================================
+
+      - name: Upload evaluation results
+
+        if: always()
+
+        uses: actions/upload-artifact@v4
+
+        with:
+
+          name: week10-evaluation-results
+
+          path: results/
+
+          retention-days: 30

@@ -1,9 +1,4 @@
-pandas
-numpy
-scikit-learn
-joblib
-pytest
-dvc[gcs]
-google-cloud-storage
-fastapi
-uvicorn
+pandas>=2.2
+scikit-learn>=1.5
+google-cloud-aiplatform>=1.153.0
+google-genai>=1.50.0
