@@ -216,7 +216,7 @@ jobs:
 
           echo "=================================================="
 
-          python scripts/compare.py \
+          python scripts/compare_results.py \
             --v1 results/v1_results.json \
             --v2 results/v2_results.json \
             --output results/comparison.json
