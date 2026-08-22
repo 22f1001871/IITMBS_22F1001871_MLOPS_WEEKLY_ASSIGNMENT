@@ -2,23 +2,159 @@ import argparse
 import json
 import os
 import re
-from pathlib import Path
 
 import pandas as pd
 import vertexai
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from vertexai.generative_models import GenerativeModel
 
 
-VALID_SPECIES = {
-    "setosa",
-    "versicolor",
-    "virginica",
-}
+VALID_SPECIES = {"setosa", "versicolor", "virginica"}
 
-    
 
-def build_v1_prompt(row):
+def extract_species(response: str):
+    """
+    Extract a valid Iris species from the model response.
+
+    This is used for accuracy/precision/recall.
+
+    Format compliance is calculated separately and strictly:
+    the complete response must be exactly one of:
+        setosa
+        versicolor
+        virginica
+    """
+
+    if not response:
+        return None
+
+    text = response.strip().lower()
+
+    # Exact valid output
+    if text in VALID_SPECIES:
+        return text
+
+    # Look for species anywhere in the response.
+    # This allows us to calculate classification accuracy even when
+    # the model adds extra text.
+    for species in VALID_SPECIES:
+        if re.search(rf"\b{species}\b", text):
+            return species
+
+    return None
+
+
+def is_format_compliant(response: str):
+    """
+    Strict format compliance.
+
+    A response is compliant ONLY when the entire response is exactly:
+        setosa
+        versicolor
+        virginica
+
+    Examples:
+
+        "setosa"                  -> True
+        "versicolor"              -> True
+        "Setosa"                  -> False
+        "This is Iris setosa."    -> False
+        '{"species": "setosa"}'   -> False
+        "setosa."                 -> False
+        ""                        -> False
+    """
+
+    if not response:
+        return False
+
+    return response.strip() in VALID_SPECIES
+
+
+def calculate_metrics(results):
+    """
+    Calculate accuracy, per-class precision and recall,
+    and format compliance.
+    """
+
+    total = len(results)
+
+    correct = sum(
+        1
+        for r in results
+        if r["predicted"] == r["expected"]
+    )
+
+    accuracy = correct / total if total else 0.0
+
+    compliant = sum(
+        1
+        for r in results
+        if r["format_compliant"]
+    )
+
+    format_compliance = compliant / total if total else 0.0
+
+    metrics = {
+        "accuracy": accuracy,
+        "format_compliance": format_compliance,
+        "per_class": {},
+    }
+
+    for species in ["setosa", "versicolor", "virginica"]:
+
+        true_positive = sum(
+            1
+            for r in results
+            if r["expected"] == species
+            and r["predicted"] == species
+        )
+
+        false_positive = sum(
+            1
+            for r in results
+            if r["expected"] != species
+            and r["predicted"] == species
+        )
+
+        false_negative = sum(
+            1
+            for r in results
+            if r["expected"] == species
+            and r["predicted"] != species
+        )
+
+        precision_denominator = true_positive + false_positive
+        recall_denominator = true_positive + false_negative
+
+        precision = (
+            true_positive / precision_denominator
+            if precision_denominator
+            else 0.0
+        )
+
+        recall = (
+            true_positive / recall_denominator
+            if recall_denominator
+            else 0.0
+        )
+
+        metrics["per_class"][species] = {
+            "precision": precision,
+            "recall": recall,
+        }
+
+    return metrics
+
+
+def create_input_text(row):
+    """
+    Create the same raw-feature representation used for evaluation.
+
+    The model was trained using:
+
+    sepal_length: 5.1, sepal_width: 3.5,
+    petal_length: 1.4, petal_width: 0.2
+    """
+
     return (
         f"sepal_length: {row['sepal_length']}, "
         f"sepal_width: {row['sepal_width']}, "
@@ -27,192 +163,40 @@ def build_v1_prompt(row):
     )
 
 
-def build_v2_prompt(row):
-    return (
-        f"A flower specimen has a sepal length of "
-        f"{row['sepal_length']} cm, "
-        f"sepal width of {row['sepal_width']} cm, "
-        f"petal length of {row['petal_length']} cm, "
-        f"and petal width of {row['petal_width']} cm. "
-        f"Identify the iris species."
-    )
-
-
-def extract_species(response):
+def create_prompt(row, version):
     """
-    Extract a species name from the model response.
+    Create the inference prompt.
 
-    This is used for classification accuracy.
-
-    Format compliance is calculated separately and requires
-    an exact valid species name.
+    Both versions are evaluated using their corresponding
+    representation.
     """
 
-    if response is None:
-        return None
-
-    text = response.strip().lower()
-
-    for species in VALID_SPECIES:
-        if re.search(rf"\b{species}\b", text):
-            return species
-
-    return None
-
-
-def is_format_compliant(response):
-    """
-    Assignment definition:
-
-    A response is compliant only when it is exactly:
-
-        setosa
-        versicolor
-        virginica
-
-    No extra text, JSON, punctuation, or wrong casing.
-    """
-
-    if response is None:
-        return False
-
-    return response.strip() in VALID_SPECIES
-
-
-def predict(model, prompt):
-    response = model.generate_content(
-        prompt,
-        generation_config={
-            "temperature": 0,
-            "max_output_tokens": 500,
-        },
-    )
-
-    if response.text is None:
-        return ""
-
-    return response.text.strip()
-
-
-def evaluate_model(
-    model,
-    df,
-    version,
-):
-    records = []
-
-    y_true = []
-    y_pred = []
-
-    compliant_count = 0
-
-    for index, row in df.iterrows():
-
-        expected = str(row["species"]).strip().lower()
-
-        if version == "v1":
-            prompt = build_v2_prompt(row)
-        else:
-            prompt = build_v1_prompt(row)
-
-        try:
-            response = predict(model, prompt)
-
-        except Exception as exc:
-            response = ""
-            print(
-                f"ERROR on sample {index}: {exc}"
-            )
-
-        if response in VALID_SPECIES:
-            predicted = raw_response
-            compliant = True
-        else:
-            predicted = None
-            compliant = False
-
-   
-
-        if compliant:
-            compliant_count += 1
-
-        y_true.append(expected)
-
-        # Unknown/malformed responses are treated
-        # as an incorrect classification.
-        if predicted in VALID_SPECIES:
-            y_pred.append(predicted)
-        else:
-            y_pred.append("__invalid__")
-
-        records.append(
-            {
-                "index": int(index),
-                "prompt": prompt,
-                "expected_species": expected,
-                "raw_response": response,
-                "predicted_species": predicted,
-                "format_compliant": compliant,
-            }
+    if version == "v1":
+        return (
+            f"sepal_length: {row['sepal_length']}, "
+            f"sepal_width: {row['sepal_width']}, "
+            f"petal_length: {row['petal_length']}, "
+            f"petal_width: {row['petal_width']}"
         )
 
-        print(
-            f"[{index + 1}/{len(df)}] "
-            f"expected={expected} "
-            f"predicted={predicted} "
-            f"compliant={compliant}"
+    elif version == "v2":
+        return (
+            f"A flower specimen has a sepal length of "
+            f"{row['sepal_length']} cm, sepal width of "
+            f"{row['sepal_width']} cm, petal length of "
+            f"{row['petal_length']} cm, and petal width of "
+            f"{row['petal_width']} cm. "
+            f"Identify the iris species."
         )
 
-    accuracy = accuracy_score(
-        y_true,
-        y_pred,
-    )
-
-    labels = [
-        "setosa",
-        "versicolor",
-        "virginica",
-    ]
-
-    precision, recall, _, support = (
-        precision_recall_fscore_support(
-            y_true,
-            y_pred,
-            labels=labels,
-            zero_division=0,
-        )
-    )
-
-    per_class = {}
-
-    for i, species in enumerate(labels):
-        per_class[species] = {
-            "precision": float(precision[i]),
-            "recall": float(recall[i]),
-            "support": int(support[i]),
-        }
-
-    format_compliance = (
-        compliant_count / len(df)
-        if len(df) > 0
-        else 0.0
-    )
-
-    return {
-        "version": version,
-        "num_samples": len(df),
-        "accuracy": float(accuracy),
-        "format_compliance_rate": float(
-            format_compliance
-        ),
-        "per_class": per_class,
-        "predictions": records,
-    }
+    raise ValueError(f"Unknown version: {version}")
 
 
 def main():
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Evaluate a fine-tuned Gemini Iris model."
+    )
 
     parser.add_argument(
         "--version",
@@ -228,21 +212,17 @@ def main():
     parser.add_argument(
         "--endpoint",
         required=True,
+        help="Full Vertex AI endpoint resource name.",
     )
 
     parser.add_argument(
         "--project",
-        default=os.getenv(
-            "GOOGLE_CLOUD_PROJECT"
-        ),
+        required=True,
     )
 
     parser.add_argument(
         "--location",
-        default=os.getenv(
-            "GOOGLE_CLOUD_LOCATION",
-            "us-central1",
-        ),
+        default="us-central1",
     )
 
     parser.add_argument(
@@ -252,12 +232,6 @@ def main():
 
     args = parser.parse_args()
 
-    if not args.project:
-        raise ValueError(
-            "Set GOOGLE_CLOUD_PROJECT "
-            "or pass --project."
-        )
-
     print("=" * 60)
     print(f"Evaluating {args.version}")
     print("=" * 60)
@@ -266,6 +240,29 @@ def main():
     print(f"Endpoint: {args.endpoint}")
     print(f"Project: {args.project}")
     print(f"Location: {args.location}")
+
+    # ---------------------------------------------------------
+    # Vertex AI initialization
+    # ---------------------------------------------------------
+
+    vertexai.init(
+        project=args.project,
+        location=args.location,
+    )
+
+    # Extract endpoint ID from:
+    #
+    # projects/.../locations/.../endpoints/123456
+    #
+    endpoint_id = args.endpoint.split("/")[-1]
+
+    model = GenerativeModel(
+        args.endpoint
+    )
+
+    # ---------------------------------------------------------
+    # Load test data
+    # ---------------------------------------------------------
 
     df = pd.read_csv(args.test_csv)
 
@@ -281,39 +278,91 @@ def main():
 
     if missing:
         raise ValueError(
-            f"Missing columns: {missing}"
+            f"Missing required columns: {sorted(missing)}"
         )
 
-    vertexai.init(
-        project=args.project,
-        location=args.location,
-    )
+    results = []
 
-    model = GenerativeModel(args.endpoint)
+    # ---------------------------------------------------------
+    # Run inference
+    # ---------------------------------------------------------
 
-    results = evaluate_model(
-        model=model,
-        df=df,
-        version=args.version,
-    )
+    for index, row in df.iterrows():
 
-    output_path = Path(args.output)
+        expected = str(row["species"]).strip().lower()
 
-    output_path.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    with open(
-        output_path,
-        "w",
-        encoding="utf-8",
-    ) as f:
-        json.dump(
-            results,
-            f,
-            indent=2,
+        prompt = create_prompt(
+            row,
+            args.version,
         )
+
+        try:
+
+            response = model.generate_content(
+                prompt,
+                generation_config={
+                    "temperature": 0.0,
+                    "max_output_tokens": 500,
+                },
+            )
+
+            raw_response = ""
+
+            if response is not None:
+                try:
+                    raw_response = response.text.strip()
+                except Exception:
+                    raw_response = ""
+
+            # -------------------------------------------------
+            # Strict format compliance
+            # -------------------------------------------------
+
+            compliant = is_format_compliant(
+                raw_response
+            )
+
+            # -------------------------------------------------
+            # Extract species for classification metrics
+            # -------------------------------------------------
+
+            predicted = extract_species(
+                raw_response
+            )
+
+        except Exception as e:
+
+            print(
+                f"[{index + 1}/{len(df)}] "
+                f"ERROR: {e}"
+            )
+
+            raw_response = ""
+            predicted = None
+            compliant = False
+
+        results.append(
+            {
+                "index": int(index),
+                "expected": expected,
+                "predicted": predicted,
+                "raw_response": raw_response,
+                "format_compliant": compliant,
+            }
+        )
+
+        print(
+            f"[{index + 1}/{len(df)}] "
+            f"expected={expected} "
+            f"predicted={predicted} "
+            f"compliant={compliant}"
+        )
+
+    # ---------------------------------------------------------
+    # Calculate metrics
+    # ---------------------------------------------------------
+
+    metrics = calculate_metrics(results)
 
     print()
     print("=" * 60)
@@ -322,28 +371,78 @@ def main():
 
     print(
         f"Accuracy: "
-        f"{results['accuracy']:.4f}"
+        f"{metrics['accuracy']:.4f}"
     )
 
     print(
         f"Format compliance: "
-        f"{results['format_compliance_rate']:.4f}"
+        f"{metrics['format_compliance']:.4f}"
     )
 
     print()
     print("Per-class metrics:")
 
-    for species, metrics in (
-        results["per_class"].items()
-    ):
+    for species in [
+        "setosa",
+        "versicolor",
+        "virginica",
+    ]:
+
+        precision = metrics["per_class"][
+            species
+        ]["precision"]
+
+        recall = metrics["per_class"][
+            species
+        ]["recall"]
+
         print(
-            f"{species:12s} "
-            f"precision={metrics['precision']:.4f} "
-            f"recall={metrics['recall']:.4f}"
+            f"{species:<12} "
+            f"precision={precision:.4f} "
+            f"recall={recall:.4f}"
+        )
+
+    # ---------------------------------------------------------
+    # Save results
+    # ---------------------------------------------------------
+
+    output = {
+        "version": args.version,
+        "project": args.project,
+        "location": args.location,
+        "endpoint": args.endpoint,
+        "endpoint_id": endpoint_id,
+        "test_set": args.test_csv,
+        "num_samples": len(results),
+        "metrics": metrics,
+        "predictions": results,
+    }
+
+    output_dir = os.path.dirname(args.output)
+
+    if output_dir:
+        os.makedirs(
+            output_dir,
+            exist_ok=True,
+        )
+
+    with open(
+        args.output,
+        "w",
+        encoding="utf-8",
+    ) as f:
+
+        json.dump(
+            output,
+            f,
+            indent=2,
+            ensure_ascii=False,
         )
 
     print()
-    print(f"Saved to: {output_path}")
+    print(
+        f"Saved to: {args.output}"
+    )
 
 
 if __name__ == "__main__":

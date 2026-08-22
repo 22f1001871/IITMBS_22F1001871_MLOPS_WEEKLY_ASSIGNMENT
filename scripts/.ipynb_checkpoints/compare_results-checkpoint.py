@@ -18,12 +18,12 @@ def main():
 
     parser.add_argument(
         "--v1",
-        default="results/v2_results.json",
+        default="results/v1_results.json",
     )
 
     parser.add_argument(
         "--v2",
-        default="results/v1_results.json",
+        default="results/v2_results.json",
     )
 
     parser.add_argument(
