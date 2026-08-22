@@ -205,21 +205,67 @@ jobs:
       # ======================================================
       # 11. Compare V1 and V2
       # ======================================================
-
       - name: Compare V1 and V2
-
         run: |
-
+          
           echo "=================================================="
-
           echo "Comparing models"
-
           echo "=================================================="
-
-          python scripts/compare_results.py \
-            --v1 results/v1_results.json \
-            --v2 results/v2_results.json \
-            --output results/comparison.json
+      
+          python - <<'PY'
+          import json
+      
+          with open("results/v1_results.json") as f:
+              v1 = json.load(f)
+      
+          with open("results/v2_results.json") as f:
+              v2 = json.load(f)
+      
+          # New evaluate.py format
+          v1_metrics = v1["metrics"]
+          v2_metrics = v2["metrics"]
+      
+          v1_accuracy = v1_metrics["accuracy"]
+          v2_accuracy = v2_metrics["accuracy"]
+      
+          v1_compliance = v1_metrics["format_compliance"]
+          v2_compliance = v2_metrics["format_compliance"]
+      
+          print()
+          print("=" * 50)
+          print("WEEK 10 MODEL COMPARISON")
+          print("=" * 50)
+      
+          print(f"V1 accuracy           : {v1_accuracy:.4f}")
+          print(f"V2 accuracy           : {v2_accuracy:.4f}")
+      
+          print(f"V1 format compliance  : {v1_compliance:.4f}")
+          print(f"V2 format compliance  : {v2_compliance:.4f}")
+      
+          print()
+          print(f"Accuracy difference   : {v2_accuracy - v1_accuracy:+.4f}")
+          print(f"Compliance difference : {v2_compliance - v1_compliance:+.4f}")
+      
+          print()
+      
+          if v1_accuracy > v2_accuracy:
+              print("Accuracy winner: V1")
+          elif v2_accuracy > v1_accuracy:
+              print("Accuracy winner: V2")
+          else:
+              print("Accuracy winner: Tie")
+      
+          if v1_compliance > v2_compliance:
+              print("Format winner: V1")
+          elif v2_compliance > v1_compliance:
+              print("Format winner: V2")
+          else:
+              print("Format winner: Tie")
+      
+          print("=" * 50)
+          print("✓ Comparison completed")
+          print("=" * 50)
+          PY
 
 
       # ======================================================
