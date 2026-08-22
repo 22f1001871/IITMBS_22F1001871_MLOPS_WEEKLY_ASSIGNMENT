@@ -16,6 +16,7 @@ VALID_SPECIES = {
     "virginica",
 }
 
+    
 
 def build_v1_prompt(row):
     return (
@@ -110,9 +111,9 @@ def evaluate_model(
         expected = str(row["species"]).strip().lower()
 
         if version == "v1":
-            prompt = build_v1_prompt(row)
-        else:
             prompt = build_v2_prompt(row)
+        else:
+            prompt = build_v1_prompt(row)
 
         try:
             response = predict(model, prompt)
@@ -123,9 +124,14 @@ def evaluate_model(
                 f"ERROR on sample {index}: {exc}"
             )
 
-        predicted_species = extract_species(response)
+        if response in VALID_SPECIES:
+            predicted = raw_response
+            compliant = True
+        else:
+            predicted = None
+            compliant = False
 
-        compliant = is_format_compliant(response)
+   
 
         if compliant:
             compliant_count += 1
@@ -134,8 +140,8 @@ def evaluate_model(
 
         # Unknown/malformed responses are treated
         # as an incorrect classification.
-        if predicted_species in VALID_SPECIES:
-            y_pred.append(predicted_species)
+        if predicted in VALID_SPECIES:
+            y_pred.append(predicted)
         else:
             y_pred.append("__invalid__")
 
@@ -145,7 +151,7 @@ def evaluate_model(
                 "prompt": prompt,
                 "expected_species": expected,
                 "raw_response": response,
-                "predicted_species": predicted_species,
+                "predicted_species": predicted,
                 "format_compliant": compliant,
             }
         )
@@ -153,7 +159,7 @@ def evaluate_model(
         print(
             f"[{index + 1}/{len(df)}] "
             f"expected={expected} "
-            f"predicted={predicted_species} "
+            f"predicted={predicted} "
             f"compliant={compliant}"
         )
 

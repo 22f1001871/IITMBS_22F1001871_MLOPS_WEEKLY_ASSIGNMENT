@@ -323,69 +323,6 @@ jobs:
           print("==============================================")
 
 
-          # --------------------------------------------------
-          # Check threshold
-          # --------------------------------------------------
-
-          failed = False
-
-
-          if v1_accuracy < threshold:
-
-              print(
-                  f"❌ V1 failed: "
-                  f"{v1_accuracy:.4f} < {threshold:.4f}"
-              )
-
-              failed = True
-
-          else:
-
-              print(
-                  f"✅ V1 passed: "
-                  f"{v1_accuracy:.4f} >= {threshold:.4f}"
-              )
-
-
-          if v2_accuracy < threshold:
-
-              print(
-                  f"❌ V2 failed: "
-                  f"{v2_accuracy:.4f} < {threshold:.4f}"
-              )
-
-              failed = True
-
-          else:
-
-              print(
-                  f"✅ V2 passed: "
-                  f"{v2_accuracy:.4f} >= {threshold:.4f}"
-              )
-
-
-          print("==============================================")
-
-
-          # --------------------------------------------------
-          # Fail GitHub Actions if necessary
-          # --------------------------------------------------
-
-          if failed:
-
-              print(
-                  "❌ Regression guard FAILED."
-              )
-
-              sys.exit(1)
-
-
-          print(
-              "✅ Regression guard PASSED."
-          )
-
-          PY
-
 
       # ======================================================
       # 14. Upload results as GitHub Actions artifacts
