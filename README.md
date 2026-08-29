@@ -213,11 +213,6 @@ Provides an overview of the Week 11 implementation, guardrail architecture, eval
 ├── .github/
 │   └── workflows/
 │
-├── app/
-│   ├── input_guardrails.py
-│   ├── output_guardrails.py
-│   └── guarded_prediction.py
-│
 ├── data/
 │   └── week10_test.csv
 │
@@ -237,6 +232,10 @@ Provides an overview of the Week 11 implementation, guardrail architecture, eval
 │   ├── test_task_3.py
 │   ├── test_task_4.py
 │   └── test_task_5.py
+│   ├── input_guardrails.py
+│   ├── output_guardrails.py
+│   └── guarded_prediction.py
+│
 │
 ├── requirements.txt
 └── README.md
