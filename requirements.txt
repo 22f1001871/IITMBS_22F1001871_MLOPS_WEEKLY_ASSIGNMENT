@@ -1,5 +1,4 @@
-pandas
-numpy
-scikit-learn
-google-cloud-storage
-joblib
+pandas>=2.2
+scikit-learn>=1.5
+google-cloud-aiplatform>=1.153.0
+google-genai>=1.50.0
